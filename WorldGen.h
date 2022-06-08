@@ -6,6 +6,11 @@
 #include "GameFramework/Actor.h"
 #include "WorldGen.generated.h"
 
+typedef struct Room {
+	AActor* object;
+	int index;
+}Room;
+
 UCLASS()
 class TESTSC_API AWorldGen : public AActor
 {
@@ -21,11 +26,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WorldGen")
 	int m_maxNbOfRooms = 5;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WorldGen")
-	float m_radius = 1000.0f; // in cm
+	float m_radius = 5000.0f; // in cm
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WorldGen")
 	UClass* m_roomToSpawn = NULL;
 
-	TArray<AActor*> m_roomsList;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WorldGen")
+	float m_max_roomWidth = 10.0f; // in m
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WorldGen")
+	float m_min_roomWidth = 2.0f;
+
+	TArray<Room> m_roomsList;
 
 protected:
 	// Called when the game starts or when spawned
