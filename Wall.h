@@ -20,18 +20,14 @@ class TESTSC_API AWall : public AActor
 	UProceduralMeshComponent* m_mesh;
 
 public:
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "wallTests")
 	FVector m_start = { 0.0, 0.0, 0.0 };
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "wallTests")
 	FVector m_end = { 10.0, 0.0, 0.0 };
 	double m_length = 15.0;
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "wallTests")
 	double m_thickness = 15.0;
 	double m_shift = m_thickness/2;
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "wallTests")
 	double m_height = 200.0;
 
-	void initializeVertices();
+	void init();
 	void createMesh();
 	void createSquareMesh(int i_face);
 	void placeWall();

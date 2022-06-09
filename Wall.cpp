@@ -54,25 +54,15 @@ void AWall::createMesh() {
 	m_mesh->CreateMeshSection(0, m_vertices, m_triangles, TArray<FVector>(), m_uvs, TArray<FColor>(), TArray<FProcMeshTangent>(), true);
 }
 
-void AWall::initializeVertices() {
-	/*
-		{ 0.0, 0.0, 0.0 }, // Bottom Left Front
-		{ 0.0, 0.0, 200.0 }, // Top Left Front
-		{ 15.0, 0.0, 0.0 }, // Bottom Right Front
-		{ 15.0, 0.0, 200.0 }, // Top Right Front
-
-		{ 0.0, 15.0, 0.0 }, // Bottom Left Back
-		{ 0.0, 15.0, 200.0 }, // Top Left Back
-		{ 15.0, 15.0, 0.0 }, // Bottom Right Back
-		{ 15.0, 15.0, 200.0 } // Top Right Back
-	*/
+void AWall::init() {
 	if (m_start.X > m_end.X) { // if the start isn't on the "front" side then we switch it with the end
 		double temp=m_start.X;
 		m_start.X = m_end.X;
 		m_end.X = temp;
 	}
 	m_length = FVector::Distance(m_end, m_start);
-	
+	m_shift = m_thickness / 2;
+
 	//FRONT
 	m_refVertices[0] = { -m_shift, 0.0, 0.0 }; // Bottom Left Front
 	m_refVertices[1] = { -m_shift, 0.0, m_height }; // Top Left Front
@@ -109,17 +99,13 @@ void AWall::placeWall() {
 	FVector newDirection = { (m_end - m_start).X, (m_end - m_start).Y , 0.0};
 
 	float deltaRotation = getAngleBetweenVectors(currentDirection, newDirection);
-	//UE_LOG(LogTemp, Log, TEXT("OLD_ROT = %lf"), newRotation.Yaw);
 	newRotation.Yaw += deltaRotation;
-	//UE_LOG(LogTemp, Log, TEXT("NEW_ROT = %lf"), newRotation.Yaw);
-	//newRotation = UKismetMathLibrary::FindLookAtRotation(m_start, m_end);
 	newLocation += m_start;
-	//UE_LOG(LogTemp, Log, TEXT("Value = %f"), NewLocation.Z);
 	SetActorLocationAndRotation(newLocation, newRotation);
 }
 
 void AWall::createWall() {
-	initializeVertices();
+	init();
 	createMesh();
 	placeWall();
 }
@@ -129,15 +115,11 @@ void AWall::createWall() {
 void AWall::BeginPlay()
 {
 	Super::BeginPlay();
-	//initializeVertices();
-	//createMesh();
-	//placeWall();
 }
 
 // Called every frame
 void AWall::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
