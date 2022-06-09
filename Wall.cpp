@@ -68,20 +68,22 @@ void AWall::initializeVertices() {
 	*/
 	if (m_start.X > m_end.X) { // if the start isn't on the "front" side then we switch it with the end
 		double temp=m_start.X;
+		m_start.X = m_end.X;
+		m_end.X = temp;
 	}
 	m_length = FVector::Distance(m_end, m_start);
 	
 	//FRONT
-	m_refVertices[0] = { 0.0, 0.0, 0.0 }; // Bottom Left Front
-	m_refVertices[1] = { 0.0, 0.0, m_height }; // Top Left Front
-	m_refVertices[2] = { m_thickness, 0.0, 0.0 }; // Bottom Right Front
-	m_refVertices[3] = { m_thickness, 0.0, m_height }; // Top Right Front
+	m_refVertices[0] = { -m_shift, 0.0, 0.0 }; // Bottom Left Front
+	m_refVertices[1] = { -m_shift, 0.0, m_height }; // Top Left Front
+	m_refVertices[2] = { m_shift, 0.0, 0.0 }; // Bottom Right Front
+	m_refVertices[3] = { m_shift, 0.0, m_height }; // Top Right Front
 
 	//BACK
-	m_refVertices[4] = { 0.0, m_length, 0.0 }; // Bottom Left Front
-	m_refVertices[5] = { 0.0, m_length, m_height }; // Top Left Front
-	m_refVertices[6] = { m_thickness, m_length, 0.0 }; // Bottom Right Front
-	m_refVertices[7] = { m_thickness, m_length, m_height }; // Top Right Front
+	m_refVertices[4] = { -m_shift, m_length, 0.0 }; // Bottom Left Front
+	m_refVertices[5] = { -m_shift, m_length, m_height }; // Top Left Front
+	m_refVertices[6] = { m_shift, m_length, 0.0 }; // Bottom Right Front
+	m_refVertices[7] = { m_shift, m_length, m_height }; // Top Right Front
 }
 
 double AWall::getAngleBetweenVectors(FVector u, FVector v) {
@@ -116,13 +118,20 @@ void AWall::placeWall() {
 	SetActorLocationAndRotation(newLocation, newRotation);
 }
 
+void AWall::createWall() {
+	initializeVertices();
+	createMesh();
+	placeWall();
+}
+
+
 // Called when the game starts or when spawned
 void AWall::BeginPlay()
 {
 	Super::BeginPlay();
-	initializeVertices();
-	createMesh();
-	placeWall();
+	//initializeVertices();
+	//createMesh();
+	//placeWall();
 }
 
 // Called every frame

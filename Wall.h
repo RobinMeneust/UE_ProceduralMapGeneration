@@ -16,19 +16,19 @@ class TESTSC_API AWall : public AActor
 	TArray<int32> m_triangles;
 	TArray<FVector2D> m_uvs;
 
-	UPROPERTY(VisibleAnywhere)
+	//UPROPERTY(VisibleAnywhere)
 	UProceduralMeshComponent* m_mesh;
 
-	public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "wallTests")
+public:
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "wallTests")
 	FVector m_start = { 0.0, 0.0, 0.0 };
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "wallTests")
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "wallTests")
 	FVector m_end = { 10.0, 0.0, 0.0 };
 	double m_length = 15.0;
-	FVector m_wallVector;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "wallTests")
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "wallTests")
 	double m_thickness = 15.0;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "wallTests")
+	double m_shift = m_thickness/2;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "wallTests")
 	double m_height = 200.0;
 
 	void initializeVertices();
@@ -36,6 +36,7 @@ class TESTSC_API AWall : public AActor
 	void createSquareMesh(int i_face);
 	void placeWall();
 	double getAngleBetweenVectors(FVector u, FVector v);
+	void createWall();
 	
 private:
 	FVector m_refVertices[8]{
@@ -64,7 +65,6 @@ public:
 	AWall();
 
 protected:
-	UPROPERTY(EditAnywhere)
 	UMaterialInterface* m_material;
 
 	// Called when the game starts or when spawned
