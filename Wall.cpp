@@ -84,12 +84,32 @@ void AWall::initializeVertices() {
 	m_refVertices[7] = { m_thickness, m_length, m_height }; // Top Right Front
 }
 
+double AWall::getAngleBetweenVectors(FVector u, FVector v) {
+	// We ignore the Z axis and we normalize u and v
+	u.Z = 0;
+	v.Z = 0;
+	u.Normalize(0);
+	v.Normalize(0);
+
+	
+	UE_LOG(LogTemp, Log, TEXT("U = (%lf;%lf) | V = (%lf;%lf) | DOT_PRODUCT = %lf"), u.X, u.Y, v.X, v.Y, FVector::DotProduct(u, v));
+	if(FVector::CrossProduct(u,v).Z>0)
+		return UKismetMathLibrary::Acos(FVector::DotProduct(u, v)) * (180 / PI); // in degrees;
+	else
+		return -1.0 * UKismetMathLibrary::Acos(FVector::DotProduct(u, v)) * (180 / PI); // in degrees;
+}
+
 void AWall::placeWall() {
 	FVector newLocation = GetActorLocation();
 	FRotator newRotation = GetActorRotation();
 
-	//float DeltaRotation = ;
-	//NewRotation.Yaw += DeltaRotation;
+	FVector currentDirection = { 0.0, m_length, 0.0 };
+	FVector newDirection = { (m_end - m_start).X, (m_end - m_start).Y , 0.0};
+
+	float deltaRotation = getAngleBetweenVectors(currentDirection, newDirection);
+	//UE_LOG(LogTemp, Log, TEXT("OLD_ROT = %lf"), newRotation.Yaw);
+	newRotation.Yaw += deltaRotation;
+	//UE_LOG(LogTemp, Log, TEXT("NEW_ROT = %lf"), newRotation.Yaw);
 	//newRotation = UKismetMathLibrary::FindLookAtRotation(m_start, m_end);
 	newLocation += m_start;
 	//UE_LOG(LogTemp, Log, TEXT("Value = %f"), NewLocation.Z);

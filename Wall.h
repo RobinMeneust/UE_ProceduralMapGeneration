@@ -35,6 +35,7 @@ class TESTSC_API AWall : public AActor
 	void createMesh();
 	void createSquareMesh(int i_face);
 	void placeWall();
+	double getAngleBetweenVectors(FVector u, FVector v);
 	
 private:
 	FVector m_refVertices[8]{
