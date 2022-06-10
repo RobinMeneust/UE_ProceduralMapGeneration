@@ -84,7 +84,7 @@ double AWall::getAngleBetweenVectors(FVector u, FVector v) {
 	v.Normalize(0);
 
 	
-	UE_LOG(LogTemp, Log, TEXT("U = (%lf;%lf) | V = (%lf;%lf) | DOT_PRODUCT = %lf"), u.X, u.Y, v.X, v.Y, FVector::DotProduct(u, v));
+	//UE_LOG(LogTemp, Log, TEXT("U = (%lf;%lf) | V = (%lf;%lf) | DOT_PRODUCT = %lf"), u.X, u.Y, v.X, v.Y, FVector::DotProduct(u, v));
 	if(FVector::CrossProduct(u,v).Z>0)
 		return UKismetMathLibrary::Acos(FVector::DotProduct(u, v)) * (180 / PI); // in degrees;
 	else
