@@ -21,19 +21,10 @@ typedef struct Map {
 	int ** grid;
 }Map;
 
-typedef struct Door {
-	int face; // left -> right -> bot -> top
-	int coordStart;
-	int coordEnd;
-}Door;
-
 typedef struct Room {
 	TArray<AWall*> walls;
 	int type; /* 0 : corridor | 1 : basic | ...*/
 	int index;
-	FIntVector coord_start;
-	FIntVector coord_end;
-	TArray<Door> doorsArray;
 }Room;
 
 UCLASS()
@@ -43,14 +34,15 @@ class TESTSC_API AMapGen : public AActor
 	
 public:	
 	AMapGen();
-	AWall* addWall(FVector start, FVector end, double height = 2.5);
+	AWall* addWall(FVector start, FVector end, bool isDoor = false, double height = 2.5);
 	void generateMesh();
-	Room addRoom(FIntVector coordStart, FIntVector coordEnd, int type);
+	Room addRoom(FIntVector start, FIntVector end, int type);
 	void buildRooms();
-	void buildDoors();
+	FIntVector getRandomPoint(int x_min, int x_max, int y_min, int y_max);
 	bool isAFreeSpace(FIntVector coordStart, FIntVector coordEnd);
-	Door getDoorData(int face, FVector parentRoomCoordStart, FVector parentRoomCoordEnd, FVector newRoomCoordStart, FVector newRoomCoordEnd);
 	bool areAlreadyConnected(FIntPoint items, TArray<FIntPoint> connections);
+	void buildDoors();
+	void insertDoor(FVector newDoorCoord[2], int roomTested);
 
 	Map m_map; // Contains all the rooms index, if m_map.grid[i][j] == -1 then it's empty, there is no room created here
 	TArray<Room> m_rooms;

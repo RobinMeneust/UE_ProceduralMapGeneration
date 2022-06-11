@@ -9,7 +9,6 @@ AWall::AWall()
 {
 	m_mesh = CreateDefaultSubobject<UProceduralMeshComponent>("ProcMesh");
 	RootComponent = m_mesh;
-
 }
 
 void AWall::createSquareMesh(int i_face) {
@@ -105,9 +104,11 @@ void AWall::placeWall() {
 }
 
 void AWall::createWall() {
-	init();
-	createMesh();
-	placeWall();
+	if (!m_isDoor) {// if it's not an empty space (like a door going from the ground to the ceiling)
+		init();
+		createMesh();
+		placeWall();
+	}
 }
 
 

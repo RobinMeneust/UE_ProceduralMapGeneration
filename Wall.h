@@ -26,6 +26,7 @@ public:
 	double m_thickness = 15.0;
 	double m_shift = m_thickness/2;
 	double m_height = 200.0;
+	bool m_isDoor = false;
 
 	void init();
 	void createMesh();
