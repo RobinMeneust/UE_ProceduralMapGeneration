@@ -11,7 +11,10 @@ AWall* AMapGen::addWall(FVector start, FVector end, bool isDoor, double height) 
 	newWall->m_height = height*100.0;
 	newWall->m_start = start;
 	newWall->m_end = end;
-	newWall->m_isDoor = isDoor;
+	if (isDoor) {
+		newWall->m_start.Z = 180.0;
+		newWall->m_height = newWall->m_height - newWall->m_start.Z;
+	}
 	newWall->m_length = FVector::Distance(start, end);
 	//UE_LOG(LogTemp, Log, TEXT("CREATED WALL coord : (%lf %lf %lf) -> (%lf %lf %lf)"), start.X, start.Y, start.Z, end.X, end.Y, end.Z);
 	//UE_LOG(LogTemp, Log, TEXT("CREATED WALL coord : (%lf %lf %lf) -> (%lf %lf %lf)"), newWall->m_start.X, newWall->m_start.Y, newWall->m_start.Z, newWall->m_end.X, newWall->m_end.Y, newWall->m_end.Z);
@@ -132,7 +135,7 @@ void AMapGen::buildRooms()
 		}
 		UE_LOG(LogTemp, Log, TEXT("iter = %d | continueSearch= %d | continue construction %d"), iter, continueSearch, continueConstruction);
 		iter++;
-	} while (iter < 100 && continueConstruction); // iter will be increased when the map gets bigger, it's just a safety for now
+	} while (iter < 1000 && continueConstruction); // iter will be increased when the map gets bigger, it's just a safety for now
 }
 
 bool AMapGen::areAlreadyConnected(FIntPoint items, TArray<FIntPoint> connections) {
@@ -150,8 +153,8 @@ AMapGen::AMapGen()
 {
 	m_borders.index = -1;
 
-	m_map.x_width = 15; // in meters
-	m_map.y_width = 15;
+	m_map.x_width = 100; // in meters
+	m_map.y_width = 100;
 
 	//CORRIDOR
 	m_roomTypes[0].min_width = 1; // 1m
@@ -160,8 +163,8 @@ AMapGen::AMapGen()
 
 	//BASIC ROOM
 	m_roomTypes[1].min_width = 4;
-	m_roomTypes[1].max_width = 30;
-	m_roomTypes[1].min_quantity = 5;
+	m_roomTypes[1].max_width = 25;
+	m_roomTypes[1].min_quantity = 500;
 	m_roomTypes[1].current_quantity = 0;
 
 	m_map.grid = new int* [m_map.x_width];
@@ -237,8 +240,9 @@ void AMapGen::insertDoor(FVector newDoorCoord[2], int roomTested) {
 			m_rooms[roomTested].walls.Add(addWall(newDoorCoord[0], newDoorCoord[1], true));
 			m_rooms[roomTested].walls.Add(addWall(newDoorCoord[1], oldWallEnd));
 		}
-		else {
-			m_rooms[roomTested].walls[wallIndex]->m_isDoor = true; // we just consider the wall as a door
+		else { // we just consider the whole wall as a door
+			m_rooms[roomTested].walls[wallIndex]->m_start.Z = 180.0;
+			m_rooms[roomTested].walls[wallIndex]->m_height = m_rooms[roomTested].walls[wallIndex]->m_height - m_rooms[roomTested].walls[wallIndex]->m_start.Z;
 		}
 		UE_LOG(LogTemp, Log, TEXT("The new door has been inserted"));
 	}
@@ -257,11 +261,11 @@ void AMapGen::buildDoors() {
 		for (int y= 0; y < m_map.y_width; y++) {
 			roomsTested.X = m_map.grid[x][y];
 			if (m_map.grid[x][y] != -1) {
-				if (x - 1 > 0 && m_map.grid[x][y] != m_map.grid[x - 1][y]) { // Left
+				if (x - 1 >= 0 && m_map.grid[x][y] != m_map.grid[x - 1][y]) { // Left
 					roomsTested.Y = m_map.grid[x - 1][y];
 					if (!areAlreadyConnected(roomsTested, connections)) {
 						newDoorCoord[0] = { x * 100.0, y * 100.0, 0 };
-						newDoorCoord[1] = { x * 100.0, (y + 1) * 100.0, 0.0 };
+						newDoorCoord[1] = { x * 100.0, (y + 2) * 100.0, 0.0 };
 						UE_LOG(LogTemp, Log, TEXT(" %d ; %d = %d has a door to the left"), x, y, m_map.grid[x][y]);
 						insertDoor(newDoorCoord, roomsTested.X);
 						if (roomsTested.Y != -1) {
@@ -277,7 +281,7 @@ void AMapGen::buildDoors() {
 					roomsTested.Y = m_map.grid[x + 1][y];
 					if (!areAlreadyConnected(roomsTested, connections)) {
 						newDoorCoord[0] = { (x + 1) * 100.0, y * 100.0, 0 };
-						newDoorCoord[1] = { (x + 1) * 100.0, (y + 1) * 100.0, 0.0 };
+						newDoorCoord[1] = { (x + 1) * 100.0, (y + 2) * 100.0, 0.0 };
 						UE_LOG(LogTemp, Log, TEXT(" %d ; %d = %d has a door to the right"), x, y, m_map.grid[x][y]);
 						insertDoor(newDoorCoord, roomsTested.X);
 						if (roomsTested.Y != -1) {
@@ -289,11 +293,11 @@ void AMapGen::buildDoors() {
 						connections.Add(roomsTested);
 					}
 				}
-				if (y - 1 > 0 && m_map.grid[x][y] != m_map.grid[x][y - 1]) { // Bot
+				if (y - 1 >= 0 && m_map.grid[x][y] != m_map.grid[x][y - 1]) { // Bot
 					roomsTested.Y = m_map.grid[x][y - 1];
 					if (!areAlreadyConnected(roomsTested, connections)) {
 						newDoorCoord[0] = { x * 100.0, y * 100.0, 0 };
-						newDoorCoord[1] = { (x + 1) * 100.0, y * 100.0, 0.0 };
+						newDoorCoord[1] = { (x + 2) * 100.0, y * 100.0, 0.0 };
 						UE_LOG(LogTemp, Log, TEXT(" %d ; %d = %d has a door to the bot"), x, y, m_map.grid[x][y]);
 						insertDoor(newDoorCoord, roomsTested.X);
 						if (roomsTested.Y != -1) {
@@ -309,7 +313,7 @@ void AMapGen::buildDoors() {
 					roomsTested.Y = m_map.grid[x][y + 1];
 					if (!areAlreadyConnected(roomsTested, connections)) {
 						newDoorCoord[0] = { x * 100.0, (y + 1) * 100.0, 0 };
-						newDoorCoord[1] = { (x + 1) * 100.0, (y + 1) * 100.0, 0.0 };
+						newDoorCoord[1] = { (x + 2) * 100.0, (y + 1) * 100.0, 0.0 };
 						UE_LOG(LogTemp, Log, TEXT(" %d ; %d = %d has a door to the top"), x, y, m_map.grid[x][y]);
 						insertDoor(newDoorCoord, roomsTested.X);
 						if (roomsTested.Y != -1) {

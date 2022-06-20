@@ -104,7 +104,7 @@ void AWall::placeWall() {
 }
 
 void AWall::createWall() {
-	if (!m_isDoor) {// if it's not an empty space (like a door going from the ground to the ceiling)
+	if (!m_isEmpty) {// if it's not an empty space (like a door going from the ground to the ceiling)
 		init();
 		createMesh();
 		placeWall();
