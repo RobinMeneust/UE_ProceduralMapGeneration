@@ -21,32 +21,35 @@ AWall* AMapGen::addWall(FVector start, FVector end, bool isDoor, double height) 
 	return newWall;
 }
 
-Room AMapGen::addRoom(FIntVector start, FIntVector end, int type) {
+Room AMapGen::addRoom(FIntPoint start, FIntPoint end, int type) {
 	Room newRoom;
 	newRoom.index = m_nbOfRooms;
+	UE_LOG(LogTemp, Log, TEXT("m_nbofRooms = %d"), m_nbOfRooms);
+	if (newRoom.index != -1) { // if we aren't building the map borders
+		for (int x = start.X; x < end.X; x++) {
+			for (int y = start.Y; y < end.Y; y++) {
+				//UE_LOG(LogTemp, Log, TEXT("add rooms loop : x,y = %d %d   |   max x,y = %d %d"), x, y, m_map.x_width, m_map.y_width);
+				m_map.grid[x][y] = newRoom.index + 1; // "+1" to skip the corridors index (0)
+			}
+		}
+	}
 
-	FVector coordStart = FVector(start * 100.0);
-	FVector coordEnd = FVector(end * 100.0);
+
+	FVector coordStart = FVector(start.X * 100.0, start.Y*100.0, 0.0);
+	FVector coordEnd = FVector(end.X * 100.0, end.Y * 100.0, 0.0);
 	//UE_LOG(LogTemp, Log, TEXT("add room 1st wall coord : (%lf %lf %lf) -> (%lf %lf %lf)"), coordStart.X, coordStart.Y - m_shift, coordStart.Z, coordEnd.X, coordEnd.Y + m_shift, coordStart.Z);
 	newRoom.walls.Add(addWall({ coordStart.X, coordStart.Y - m_shift, coordStart.Z }, { coordStart.X, coordEnd.Y + m_shift, coordStart.Z }));
 	newRoom.walls.Add(addWall({ coordStart.X, coordEnd.Y, coordStart.Z }, { coordEnd.X, coordEnd.Y, coordEnd.Z }));
 	newRoom.walls.Add(addWall({ coordEnd.X, coordEnd.Y + m_shift, coordEnd.Z }, { coordEnd.X, coordStart.Y - m_shift, coordStart.Z }));
 	newRoom.walls.Add(addWall({ coordEnd.X, coordStart.Y, coordStart.Z }, { coordStart.X, coordStart.Y, coordStart.Z }));
 
-	if (newRoom.index != -1) { // if we aren't building the map borders
-		for (int x = start.X; x < end.X; x++) {
-			for (int y = start.Y; y < end.Y; y++) {
-				//UE_LOG(LogTemp, Log, TEXT("add rooms loop : x,y = %d %d   |   max x,y = %d %d"), x, y, m_map.x_width, m_map.y_width);
-				m_map.grid[x][y] = newRoom.index;
-			}
-		}
-	}
+	
 
-	UE_LOG(LogTemp, Log, TEXT("ADD THE ROOM N° %d: S(%d %d %d) | E(%d %d %d)"), m_nbOfRooms, start.X, start.Y, start.Z, end.X, end.Y, end.Z);
-	m_nbOfRooms++;
-	if(type>=0)
+	UE_LOG(LogTemp, Log, TEXT("ADD THE ROOM N° %d: S(%d %d) | E(%d %d)"), m_nbOfRooms, start.X, start.Y, end.X, end.Y);
+	if(type>0)
 		m_roomTypes[type].current_quantity++;
 
+	m_nbOfRooms++;
 	return newRoom;
 }
 
@@ -61,9 +64,15 @@ void AMapGen::generateMesh() {
 			m_rooms[i].walls[j]->createWall();
 		}
 	}
+
+	for (int i = 0; i < m_corridors.Num(); i++) {
+		for (int j = 0; j < m_corridors[i].wallElements.Num(); j++) {
+			m_corridors[i].wallElements[j]->createWall();
+		}
+	}
 }
 
-bool AMapGen::isAFreeSpace(FIntVector coordStart, FIntVector coordEnd) {
+bool AMapGen::isAFreeSpace(FIntPoint coordStart, FIntPoint coordEnd) {
 	// IS OUT OF THE MAP
 	if (coordStart.X < 0 ||
 		coordEnd.X > m_map.x_width ||
@@ -87,9 +96,9 @@ bool AMapGen::isAFreeSpace(FIntVector coordStart, FIntVector coordEnd) {
 	return true;
 }
 
-FIntVector AMapGen::getRandomPoint(int x_min, int x_max, int y_min, int y_max)
+FIntPoint AMapGen::getRandomPoint(int x_min, int x_max, int y_min, int y_max)
 {
-	FIntVector coord = FIntVector::ZeroValue;
+	FIntPoint coord;
 	coord.X = FMath::RandRange(x_min, x_max);
 	coord.Y = FMath::RandRange(y_min, y_max);
 	
@@ -102,10 +111,10 @@ void AMapGen::buildRooms()
 	int iter_search = 0;
 	bool continueConstruction = true;
 	bool continueSearch = true;
-	FIntVector newRoomCoordStart = { 0, 0, 0 };
-	FIntVector newRoomCoordEnd = { FMath::RandRange(m_roomTypes[1].min_width, m_roomTypes[1].max_width), FMath::RandRange(m_roomTypes[1].min_width, m_roomTypes[1].max_width), 0 };
-	FIntVector newRoomScale;
-	TArray<FIntVector> emptyNeighbours;
+	FIntPoint newRoomCoordStart = { 0, 0 };
+	FIntPoint newRoomCoordEnd = { FMath::RandRange(m_roomTypes[1].min_width, m_roomTypes[1].max_width), FMath::RandRange(m_roomTypes[1].min_width, m_roomTypes[1].max_width) };
+	FIntPoint newRoomScale;
+	TArray<FIntPoint> emptyNeighbours;
 
 	do {
 		continueSearch = true;
@@ -113,7 +122,7 @@ void AMapGen::buildRooms()
 
 		do {
 			newRoomCoordStart = getRandomPoint(0, m_map.x_width - newRoomScale.X, 0, m_map.y_width - newRoomScale.Y);
-			newRoomScale = { FMath::RandRange(m_roomTypes[1].min_width, m_roomTypes[1].max_width), FMath::RandRange(m_roomTypes[1].min_width, m_roomTypes[1].max_width), 0 };
+			newRoomScale = { FMath::RandRange(m_roomTypes[1].min_width, m_roomTypes[1].max_width), FMath::RandRange(m_roomTypes[1].min_width, m_roomTypes[1].max_width) };
 			newRoomCoordEnd = newRoomCoordStart + newRoomScale;
 			if (isAFreeSpace(newRoomCoordStart, newRoomCoordEnd)) {
 				continueSearch = false;
@@ -153,18 +162,17 @@ AMapGen::AMapGen()
 {
 	m_borders.index = -1;
 
-	m_map.x_width = 100; // in meters
-	m_map.y_width = 100;
+	m_map.x_width = 10; // in meters
+	m_map.y_width = 10;
 
 	//CORRIDOR
 	m_roomTypes[0].min_width = 1; // 1m
-	m_roomTypes[0].min_quantity = 5;
 	m_roomTypes[0].current_quantity = 0;
 
 	//BASIC ROOM
 	m_roomTypes[1].min_width = 4;
-	m_roomTypes[1].max_width = 25;
-	m_roomTypes[1].min_quantity = 500;
+	m_roomTypes[1].max_width = 15;
+	m_roomTypes[1].min_quantity = 10;
 	m_roomTypes[1].current_quantity = 0;
 
 	m_map.grid = new int* [m_map.x_width];
@@ -330,6 +338,106 @@ void AMapGen::buildDoors() {
 	}
 }
 
+int AMapGen::getValidNeighbour(FIntPoint cell, FIntPoint* newCell)
+{
+	int direction = FMath::RandRange(0, 3);
+
+	for (int i = 0; i < 4; i++) {
+		*newCell = FIntPoint(cell);
+		switch (direction) {
+			case 0:	newCell->X--; break; // Left
+			case 1:	newCell->Y++; break; // Top
+			case 2:	newCell->X++; break; // Right
+			case 3:	newCell->Y--; break; // Bot
+		}
+		UE_LOG(LogTemp, Log, TEXT("in getValidNeighbour() : cell and newCell pos : (%d %d) | (%d %d) ||| cell and newCell in map grid %d | %d"), cell.X, cell.Y, newCell->X, newCell->Y, m_map.grid[cell.X][cell.Y], m_map.grid[newCell->X][newCell->Y]);
+		if (newCell->X >= 0 && newCell->Y >= 0 && newCell->X < m_map.x_width && newCell->Y < m_map.y_width && m_map.grid[newCell->X][newCell->Y] == -1)
+			return direction;
+
+		direction++;
+		if (direction > 3)
+			direction = 0;
+	}
+	UE_LOG(LogTemp, Log, TEXT("in getValidNeighbour() : neighbour not found"));
+	return -1; // No valid neighbour was found
+}
+
+void AMapGen::initializePath(Path *path)
+{
+	path->pos = FIntPoint::ZeroValue;
+	for (int i = 0; i < 4; i++)
+		path->walls[i] = true; // there are 4 walls by default
+}
+
+void AMapGen::buildCorridors()
+{
+	Path currentCell;
+	initializePath(&currentCell);
+	Path newCell;
+	int index = 0;
+	int direction = 0;
+	int oppositeDirection = 0;
+	int iter = 0;
+	currentCell.pos = getRandomPoint(0, m_map.x_width - 1, 0, m_map.y_width - 1);
+	m_corridors.Add(currentCell);
+	m_map.grid[currentCell.pos.X][currentCell.pos.Y] = 0;
+
+	do {
+		initializePath(&newCell);
+		direction = getValidNeighbour(currentCell.pos, &(newCell.pos));
+
+		if (direction == -1) { // No neighbour was found
+			UE_LOG(LogTemp, Log, TEXT("neighbour not found, we will search it with a previous cell"));
+			index = FMath::RandRange(-1, m_corridors.Num()-2);
+			for (int i = 0; i < m_corridors.Num(); i++) {
+				index++;
+				if (i >= m_corridors.Num())
+					index = 0;
+				currentCell = m_corridors[index];
+				direction = getValidNeighbour(currentCell.pos, &(newCell.pos));
+
+				if (direction != -1) { // A cell with a valid neigbour was found
+					break;
+				}
+			}
+		}
+		if (direction != -1) {
+			UE_LOG(LogTemp, Log, TEXT("neighbour found"));
+			oppositeDirection = direction + 2;
+			if (oppositeDirection >= 4)
+				oppositeDirection -= 4;
+			m_corridors[index].walls[direction] = false;
+			newCell.walls[oppositeDirection] = false;
+			UE_LOG(LogTemp, Log, TEXT("test direction & oppDir in maze gen: %d | %d ||| pos of current & new path: (%d %d) | (%d %d)"), direction, oppositeDirection, currentCell.pos.X, currentCell.pos.Y, newCell.pos.X, newCell.pos.Y);
+			m_corridors.Add(newCell);
+			m_map.grid[newCell.pos.X][newCell.pos.Y] = 0;
+			index = m_corridors.Num() - 1;
+			currentCell = m_corridors[index]; // newCell = previous cell
+		}
+		UE_LOG(LogTemp, Log, TEXT("ITER : %d"), iter);
+		iter++;
+	} while (iter<10 && m_corridors.Num()< m_map.x_width * m_map.y_width);
+
+	for (int i = 0; i < m_corridors.Num(); i++) {
+		UE_LOG(LogTemp, Log, TEXT("corridor %d at pos %d %d: "), i, m_corridors[i].pos.X, m_corridors[i].pos.Y);
+		if (m_corridors[i].walls[0]) { // left
+			UE_LOG(LogTemp, Log, TEXT("Has a wall on the left side"));
+			m_corridors[i].wallElements.Add(addWall({ m_corridors[i].pos.X * 100.0, m_corridors[i].pos.Y * 100.0 - m_shift, 0.0 }, { m_corridors[i].pos.X * 100.0, (m_corridors[i].pos.Y + 1) * 100.0 - m_shift, 0.0 }));
+		}
+		if (m_corridors[i].walls[1]) { // top
+			UE_LOG(LogTemp, Log, TEXT("Has a wall on the top side"));
+			m_corridors[i].wallElements.Add(addWall({ m_corridors[i].pos.X * 100.0, (m_corridors[i].pos.Y + 1) * 100.0 - m_shift, 0.0 }, { (m_corridors[i].pos.X + 1) * 100.0, (m_corridors[i].pos.Y + 1) * 100.0 - m_shift, 0.0 }));
+		}
+		if (m_corridors[i].walls[2]) { // right
+			UE_LOG(LogTemp, Log, TEXT("Has a wall on the right side"));
+			m_corridors[i].wallElements.Add(addWall({ (m_corridors[i].pos.X + 1) * 100.0, (m_corridors[i].pos.Y + 1) * 100.0 - m_shift, 0.0 }, { (m_corridors[i].pos.X + 1) * 100.0, m_corridors[i].pos.Y * 100.0 - m_shift, 0.0 }));
+		}
+		if (m_corridors[i].walls[3]) { // bot
+			UE_LOG(LogTemp, Log, TEXT("Has a wall on the bot side"));
+			m_corridors[i].wallElements.Add(addWall({ (m_corridors[i].pos.X + 1) * 100.0, m_corridors[i].pos.Y * 100.0 - m_shift, 0.0 }, { m_corridors[i].pos.X * 100.0, m_corridors[i].pos.Y * 100.0 - m_shift, 0.0 }));
+		}
+	}
+}
 
 // Called when the game starts or when spawned
 void AMapGen::BeginPlay()
@@ -342,17 +450,15 @@ void AMapGen::BeginPlay()
 		}
 	}
 
-	for (int i = 0; i < m_rooms.Num(); i++) {
-		m_rooms[i].walls.Empty();
-	}
-
 	m_rooms.Empty();
+	m_corridors.Empty();
 
 	m_borders.walls.Empty();
 
-	m_borders = addRoom({ 0, 0, 0 }, { m_map.x_width, m_map.y_width, 0 }, -1);
+	m_borders = addRoom({ 0, 0 }, { m_map.x_width, m_map.y_width }, -1);
 	UE_LOG(LogTemp, Log, TEXT("Borders have been added"));
-	buildRooms();
+	buildCorridors();
+	//buildRooms();
 	//UE_LOG(LogTemp, Log, TEXT("m_nbOfRooms %d | m_rooms.Num() %d"), m_nbOfRooms, m_rooms.Num());
 	//for (int i = 0; i < m_rooms.Num(); i++) {
 		//UE_LOG(LogTemp, Log, TEXT("m_rooms[i].walls.Num() %d"), m_rooms[i].walls.Num());
@@ -361,7 +467,7 @@ void AMapGen::BeginPlay()
 			//UE_LOG(LogTemp, Log, TEXT("CREATED WALL coord : (%lf %lf %lf) -> (%lf %lf %lf)"), m_rooms[i].walls[j]->m_start.X, m_rooms[i].walls[j]->m_start.Y, m_rooms[i].walls[j]->m_start.Z, m_rooms[i].walls[j]->m_end.X, m_rooms[i].walls[j]->m_end.Y, m_rooms[i].walls[j]->m_end.Z);
 		//}
 	//}
-	buildDoors();
+	//buildDoors();
 
 	generateMesh();	
 }

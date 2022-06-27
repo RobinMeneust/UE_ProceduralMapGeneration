@@ -27,6 +27,12 @@ typedef struct Room {
 	int index;
 }Room;
 
+typedef struct Path {
+	FIntPoint pos;
+	bool walls[4]; // 0: left, 1: top, 2: right, 3: bot
+	TArray<AWall*> wallElements;
+}Path;
+
 UCLASS()
 class TESTSC_API AMapGen : public AActor
 {
@@ -36,16 +42,20 @@ public:
 	AMapGen();
 	AWall* addWall(FVector start, FVector end, bool isDoor = false, double height = 2.5);
 	void generateMesh();
-	Room addRoom(FIntVector start, FIntVector end, int type);
+	Room addRoom(FIntPoint start, FIntPoint end, int type);
 	void buildRooms();
-	FIntVector getRandomPoint(int x_min, int x_max, int y_min, int y_max);
-	bool isAFreeSpace(FIntVector coordStart, FIntVector coordEnd);
+	FIntPoint getRandomPoint(int x_min, int x_max, int y_min, int y_max);
+	bool isAFreeSpace(FIntPoint coordStart, FIntPoint coordEnd);
 	bool areAlreadyConnected(FIntPoint items, TArray<FIntPoint> connections);
 	void buildDoors();
+	void initializePath(Path* path);
+	int getValidNeighbour(FIntPoint cell, FIntPoint* newCell);
+	void buildCorridors();
 	void insertDoor(FVector newDoorCoord[2], int roomTested);
 
 	Map m_map; // Contains all the rooms index, if m_map.grid[i][j] == -1 then it's empty, there is no room created here
 	TArray<Room> m_rooms;
+	TArray<Path> m_corridors;
 	RoomType m_roomTypes[2];
 	int m_numberOfRoomTypes = 2;
 	Room m_borders;
@@ -58,5 +68,5 @@ protected:
 	virtual void BeginDestroy() override;
 
 private:
-	int m_nbOfRooms = -1; // -1 corresponds to the map borders
+	int m_nbOfRooms = -1;
 };
