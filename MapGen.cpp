@@ -162,8 +162,8 @@ AMapGen::AMapGen()
 {
 	m_borders.index = -1;
 
-	m_map.x_width = 10; // in meters
-	m_map.y_width = 10;
+	m_map.x_width = 50; // in meters
+	m_map.y_width = 50;
 
 	//CORRIDOR
 	m_roomTypes[0].min_width = 1; // 1m
@@ -350,9 +350,11 @@ int AMapGen::getValidNeighbour(FIntPoint cell, FIntPoint* newCell)
 			case 2:	newCell->X++; break; // Right
 			case 3:	newCell->Y--; break; // Bot
 		}
-		UE_LOG(LogTemp, Log, TEXT("in getValidNeighbour() : cell and newCell pos : (%d %d) | (%d %d) ||| cell and newCell in map grid %d | %d"), cell.X, cell.Y, newCell->X, newCell->Y, m_map.grid[cell.X][cell.Y], m_map.grid[newCell->X][newCell->Y]);
-		if (newCell->X >= 0 && newCell->Y >= 0 && newCell->X < m_map.x_width && newCell->Y < m_map.y_width && m_map.grid[newCell->X][newCell->Y] == -1)
+		UE_LOG(LogTemp, Log, TEXT("in getValidNeighbour() : cell and newCell pos : (%d %d) | (%d %d)"), cell.X, cell.Y, newCell->X, newCell->Y);
+		if (newCell->X >= 0 && newCell->Y >= 0 && newCell->X < m_map.x_width && newCell->Y < m_map.y_width && m_map.grid[newCell->X][newCell->Y] == -1) {
+			UE_LOG(LogTemp, Log, TEXT("in getValidNeighbour() : cell and newCell in map grid %d | %d"), newCell->Y, m_map.grid[cell.X][cell.Y], m_map.grid[newCell->X][newCell->Y]);
 			return direction;
+		}
 
 		direction++;
 		if (direction > 3)
@@ -391,7 +393,7 @@ void AMapGen::buildCorridors()
 			index = FMath::RandRange(-1, m_corridors.Num()-2);
 			for (int i = 0; i < m_corridors.Num(); i++) {
 				index++;
-				if (i >= m_corridors.Num())
+				if (index >= m_corridors.Num())
 					index = 0;
 				currentCell = m_corridors[index];
 				direction = getValidNeighbour(currentCell.pos, &(newCell.pos));
@@ -416,7 +418,7 @@ void AMapGen::buildCorridors()
 		}
 		UE_LOG(LogTemp, Log, TEXT("ITER : %d"), iter);
 		iter++;
-	} while (iter<10 && m_corridors.Num()< m_map.x_width * m_map.y_width);
+	} while (iter<1000 && m_corridors.Num()< m_map.x_width * m_map.y_width);
 
 	for (int i = 0; i < m_corridors.Num(); i++) {
 		UE_LOG(LogTemp, Log, TEXT("corridor %d at pos %d %d: "), i, m_corridors[i].pos.X, m_corridors[i].pos.Y);
@@ -458,6 +460,7 @@ void AMapGen::BeginPlay()
 	m_borders = addRoom({ 0, 0 }, { m_map.x_width, m_map.y_width }, -1);
 	UE_LOG(LogTemp, Log, TEXT("Borders have been added"));
 	buildCorridors();
+	UE_LOG(LogTemp, Log, TEXT("Corridors have been added"));
 	//buildRooms();
 	//UE_LOG(LogTemp, Log, TEXT("m_nbOfRooms %d | m_rooms.Num() %d"), m_nbOfRooms, m_rooms.Num());
 	//for (int i = 0; i < m_rooms.Num(); i++) {
