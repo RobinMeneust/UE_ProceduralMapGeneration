@@ -187,6 +187,7 @@ AMapGen::AMapGen()
 void AMapGen::insertDoor(FVector newDoorCoord[2], int roomTested) {
 	// We are seeking a wall that has the same orientation as the new door (x = const = newDoor.X or y = const = newDoor.Y) and the other coordinate that isn't constant should be the same as the newDoor
 	int wallIndex = -1; // index of the wall where the door will be builded
+	bool stop = false;
 	if (newDoorCoord[0].X == newDoorCoord[1].X) {
 		UE_LOG(LogTemp, Log, TEXT("insertDoor() first case"));
 
@@ -206,7 +207,7 @@ void AMapGen::insertDoor(FVector newDoorCoord[2], int roomTested) {
 					{
 						wallIndex = i;
 
-						if (newDoorCoord[0].Y < newDoorCoord[1].Y) { // left
+						if (m_corridors[j].wallElements[i]->m_start.Y < m_corridors[j].wallElements[i]->m_end.Y) { // left
 							newDoorCoord[0].Y += m_shift;
 							newDoorCoord[1].Y -= m_shift;
 						}
@@ -214,9 +215,12 @@ void AMapGen::insertDoor(FVector newDoorCoord[2], int roomTested) {
 							newDoorCoord[0].Y -= m_shift;
 							newDoorCoord[1].Y += m_shift;
 						}
+						stop = true;
 						break;
 					}
 				}
+				if (stop)
+					break;
 			}
 		}
 		else {
@@ -234,7 +238,7 @@ void AMapGen::insertDoor(FVector newDoorCoord[2], int roomTested) {
 				{
 					wallIndex = i;
 
-					if (newDoorCoord[0].Y < newDoorCoord[1].Y) { // left
+					if (m_rooms[roomTested].walls[i]->m_start.Y < m_rooms[roomTested].walls[i]->m_end.Y) { // left
 						newDoorCoord[0].Y += m_shift;
 						newDoorCoord[1].Y -= m_shift;
 					}
@@ -267,7 +271,7 @@ void AMapGen::insertDoor(FVector newDoorCoord[2], int roomTested) {
 					{
 						wallIndex = i;
 
-						if (newDoorCoord[0].X < newDoorCoord[1].X) { // top
+						if (m_corridors[j].wallElements[i]->m_start.X < m_corridors[j].wallElements[i]->m_end.X) { // top
 							newDoorCoord[0].X += m_shift;
 							newDoorCoord[1].X -= m_shift;
 						}
@@ -275,9 +279,12 @@ void AMapGen::insertDoor(FVector newDoorCoord[2], int roomTested) {
 							newDoorCoord[0].X -= m_shift;
 							newDoorCoord[1].X += m_shift;
 						}
+						stop = true;
 						break;
 					}
 				}
+				if (stop)
+					break;
 			}
 		}
 		else {
@@ -295,7 +302,7 @@ void AMapGen::insertDoor(FVector newDoorCoord[2], int roomTested) {
 				{
 					wallIndex = i;
 
-					if (newDoorCoord[0].X < newDoorCoord[1].X) { // top
+					if (m_rooms[roomTested].walls[i]->m_start.X < m_rooms[roomTested].walls[i]->m_end.X) { // top
 						newDoorCoord[0].X += m_shift;
 						newDoorCoord[1].X -= m_shift;
 					}
@@ -336,7 +343,7 @@ void AMapGen::buildDoors() {
 	for (int x = 0; x < m_map.x_width; x++) {
 		for (int y= 0; y < m_map.y_width; y++) {
 			roomsTested.X = m_map.grid[x][y];
-			if (m_map.grid[x][y] != -1) {
+			if (m_map.grid[x][y] > 0) { // is not empty and is not a corridor
 				if (x - 1 >= 0 && m_map.grid[x][y] != m_map.grid[x - 1][y]) { // Left
 					roomsTested.Y = m_map.grid[x - 1][y];
 					if (!areAlreadyConnected(roomsTested, connections)) {
@@ -356,8 +363,8 @@ void AMapGen::buildDoors() {
 				if (x + 1 < m_map.x_width && m_map.grid[x][y] != m_map.grid[x + 1][y]) { // Right
 					roomsTested.Y = m_map.grid[x + 1][y];
 					if (!areAlreadyConnected(roomsTested, connections)) {
-						newDoorCoord[0] = { (x + 1) * 100.0, y * 100.0, 0 };
-						newDoorCoord[1] = { (x + 1) * 100.0, (y + 2) * 100.0, 0.0 };
+						newDoorCoord[0] = { (x + 1) * 100.0, (y + 2) * 100.0, 0 };
+						newDoorCoord[1] = { (x + 1) * 100.0, y * 100.0, 0.0 };
 						UE_LOG(LogTemp, Log, TEXT(" %d ; %d = %d has a door to the right"), x, y, m_map.grid[x][y]);
 						insertDoor(newDoorCoord, roomsTested.X);
 						if (roomsTested.Y != -1) {
@@ -372,8 +379,8 @@ void AMapGen::buildDoors() {
 				if (y - 1 >= 0 && m_map.grid[x][y] != m_map.grid[x][y - 1]) { // Bot
 					roomsTested.Y = m_map.grid[x][y - 1];
 					if (!areAlreadyConnected(roomsTested, connections)) {
-						newDoorCoord[0] = { x * 100.0, y * 100.0, 0 };
-						newDoorCoord[1] = { (x + 2) * 100.0, y * 100.0, 0.0 };
+						newDoorCoord[0] = { (x + 2) * 100.0, y * 100.0, 0 };
+						newDoorCoord[1] = { x * 100.0, y * 100.0, 0.0 };
 						UE_LOG(LogTemp, Log, TEXT(" %d ; %d = %d has a door to the bot"), x, y, m_map.grid[x][y]);
 						insertDoor(newDoorCoord, roomsTested.X);
 						if (roomsTested.Y != -1) {
@@ -418,9 +425,9 @@ int AMapGen::getValidNeighbour(FIntPoint cell, FIntPoint* newCell)
 			case 2:	newCell->X++; break; // Right
 			case 3:	newCell->Y--; break; // Bot
 		}
-		UE_LOG(LogTemp, Log, TEXT("in getValidNeighbour() : cell and newCell pos : (%d %d) | (%d %d)"), cell.X, cell.Y, newCell->X, newCell->Y);
+		//UE_LOG(LogTemp, Log, TEXT("in getValidNeighbour() : cell and newCell pos : (%d %d) | (%d %d)"), cell.X, cell.Y, newCell->X, newCell->Y);
 		if (newCell->X >= 0 && newCell->Y >= 0 && newCell->X < m_map.x_width && newCell->Y < m_map.y_width && m_map.grid[newCell->X][newCell->Y] == -1) {
-			UE_LOG(LogTemp, Log, TEXT("in getValidNeighbour() : cell and newCell in map grid %d | %d"), newCell->Y, m_map.grid[cell.X][cell.Y], m_map.grid[newCell->X][newCell->Y]);
+			//UE_LOG(LogTemp, Log, TEXT("in getValidNeighbour() : cell and newCell in map grid %d | %d"), newCell->Y, m_map.grid[cell.X][cell.Y], m_map.grid[newCell->X][newCell->Y]);
 			return direction;
 		}
 
@@ -428,7 +435,7 @@ int AMapGen::getValidNeighbour(FIntPoint cell, FIntPoint* newCell)
 		if (direction > 3)
 			direction = 0;
 	}
-	UE_LOG(LogTemp, Log, TEXT("in getValidNeighbour() : neighbour not found"));
+	//UE_LOG(LogTemp, Log, TEXT("in getValidNeighbour() : neighbour not found"));
 	return -1; // No valid neighbour was found
 }
 
@@ -447,70 +454,78 @@ void AMapGen::buildCorridors()
 	int direction = 0;
 	int oppositeDirection = 0;
 	bool firstCell = true;
+	int iter = 0;
+	int max_iter = m_map.x_width * m_map.y_width;
 
 	for (int x = 0; x < m_map.x_width; x++) {
 		for (int y = 0; y < m_map.y_width; y++) {
-			UE_LOG(LogTemp, Log, TEXT("x | y = %d | %d"), x, y);
+			//UE_LOG(LogTemp, Log, TEXT("x | y = %d | %d"), x, y);
 			if (m_map.grid[x][y] == -1) {
 				initializePath(&currentCell);
 				currentCell.pos = FIntPoint(x, y);
-				initializePath(&newCell);
-				direction = getValidNeighbour(currentCell.pos, &(newCell.pos));
-				if (firstCell) {
-					m_corridors.Add(currentCell);
-					m_map.grid[currentCell.pos.X][currentCell.pos.Y] = 0;
-					firstCell = false;
-				}
 
-				if (direction == -1) { // No neighbour was found
-					UE_LOG(LogTemp, Log, TEXT("neighbour not found, we will search it with a previous cell"));
-					index = FMath::RandRange(-1, m_corridors.Num() - 2);
-					for (int i = 0; i < m_corridors.Num(); i++) {
-						index++;
-						if (index >= m_corridors.Num())
-							index = 0;
-						currentCell = m_corridors[index];
-						direction = getValidNeighbour(currentCell.pos, &(newCell.pos));
+				do {
+					initializePath(&newCell);
+					direction = getValidNeighbour(currentCell.pos, &(newCell.pos));
+					if (firstCell) {
+						m_corridors.Add(currentCell);
+						m_map.grid[currentCell.pos.X][currentCell.pos.Y] = 0;
+						firstCell = false;
+					}
 
-						if (direction != -1) { // A cell with a valid neigbour was found
-							break;
+					if (direction == -1) { // No neighbour was found
+						//UE_LOG(LogTemp, Log, TEXT("neighbour not found, we will search it with a previous cell"));
+						index = FMath::RandRange(-1, m_corridors.Num() - 2);
+						for (int i = 0; i < m_corridors.Num(); i++) {
+							index++;
+							if (index >= m_corridors.Num())
+								index = 0;
+							currentCell = m_corridors[index];
+							direction = getValidNeighbour(currentCell.pos, &(newCell.pos));
+
+							if (direction != -1) { // A cell with a valid neigbour was found
+								break;
+							}
 						}
 					}
-				}
 
-				if (direction != -1) {
-					UE_LOG(LogTemp, Log, TEXT("neighbour found"));
-					oppositeDirection = direction + 2;
-					if (oppositeDirection >= 4)
-						oppositeDirection -= 4;
-					m_corridors[index].walls[direction] = false;
-					newCell.walls[oppositeDirection] = false;
-					UE_LOG(LogTemp, Log, TEXT("test direction & oppDir in maze gen: %d | %d ||| pos of current & new path: (%d %d) | (%d %d)"), direction, oppositeDirection, currentCell.pos.X, currentCell.pos.Y, newCell.pos.X, newCell.pos.Y);
-					m_corridors.Add(newCell);
-					m_map.grid[newCell.pos.X][newCell.pos.Y] = 0;
-					index = m_corridors.Num() - 1;
-					currentCell = m_corridors[index]; // newCell = previous cell
-				}
+					if (direction != -1) {
+						//UE_LOG(LogTemp, Log, TEXT("neighbour found"));
+						oppositeDirection = direction + 2;
+						if (oppositeDirection >= 4)
+							oppositeDirection -= 4;
+						m_corridors[index].walls[direction] = false;
+						newCell.walls[oppositeDirection] = false;
+						//UE_LOG(LogTemp, Log, TEXT("test direction & oppDir in maze gen: %d | %d ||| pos of current & new path: (%d %d) | (%d %d)"), direction, oppositeDirection, currentCell.pos.X, currentCell.pos.Y, newCell.pos.X, newCell.pos.Y);
+						m_corridors.Add(newCell);
+						m_map.grid[newCell.pos.X][newCell.pos.Y] = 0;
+						index = m_corridors.Num() - 1;
+						currentCell = m_corridors[index]; // newCell = previous cell
+					}
+					else
+						break;
+					iter++;
+				} while (iter < max_iter);
 			}
 		}
 	}
 
 	for (int i = 0; i < m_corridors.Num(); i++) {
-		UE_LOG(LogTemp, Log, TEXT("corridor %d at pos %d %d: "), i, m_corridors[i].pos.X, m_corridors[i].pos.Y);
+		//UE_LOG(LogTemp, Log, TEXT("corridor %d at pos %d %d: "), i, m_corridors[i].pos.X, m_corridors[i].pos.Y);
 		if (m_corridors[i].walls[0]) { // left
-			UE_LOG(LogTemp, Log, TEXT("Has a wall on the left side"));
+			//UE_LOG(LogTemp, Log, TEXT("Has a wall on the left side"));
 			m_corridors[i].wallElements.Add(addWall({ m_corridors[i].pos.X * 100.0, m_corridors[i].pos.Y * 100.0 - m_shift, 0.0 }, { m_corridors[i].pos.X * 100.0, (m_corridors[i].pos.Y + 1) * 100.0 + m_shift, 0.0 }));
 		}
 		if (m_corridors[i].walls[1]) { // top
-			UE_LOG(LogTemp, Log, TEXT("Has a wall on the top side"));
+			//UE_LOG(LogTemp, Log, TEXT("Has a wall on the top side"));
 			m_corridors[i].wallElements.Add(addWall({ m_corridors[i].pos.X * 100.0, (m_corridors[i].pos.Y + 1) * 100.0, 0.0 }, { (m_corridors[i].pos.X + 1) * 100.0, (m_corridors[i].pos.Y + 1) * 100.0, 0.0 }));
 		}
 		if (m_corridors[i].walls[2]) { // right
-			UE_LOG(LogTemp, Log, TEXT("Has a wall on the right side"));
+			//UE_LOG(LogTemp, Log, TEXT("Has a wall on the right side"));
 			m_corridors[i].wallElements.Add(addWall({ (m_corridors[i].pos.X + 1) * 100.0, (m_corridors[i].pos.Y + 1) * 100.0 + m_shift, 0.0 }, { (m_corridors[i].pos.X + 1) * 100.0, m_corridors[i].pos.Y * 100.0 - m_shift, 0.0 }));
 		}
 		if (m_corridors[i].walls[3]) { // bot
-			UE_LOG(LogTemp, Log, TEXT("Has a wall on the bot side"));
+			//UE_LOG(LogTemp, Log, TEXT("Has a wall on the bot side"));
 			m_corridors[i].wallElements.Add(addWall({ (m_corridors[i].pos.X + 1) * 100.0, m_corridors[i].pos.Y * 100.0, 0.0 }, { m_corridors[i].pos.X * 100.0, m_corridors[i].pos.Y * 100.0, 0.0 }));
 		}
 	}
@@ -541,7 +556,7 @@ void AMapGen::BeginPlay()
 	m_nbOfRooms++;
 	buildRooms();
 	UE_LOG(LogTemp, Log, TEXT("Rooms have been added"));
-	//buildCorridors();
+	buildCorridors();
 	UE_LOG(LogTemp, Log, TEXT("Corridors have been added"));
 	//UE_LOG(LogTemp, Log, TEXT("m_nbOfRooms %d | m_rooms.Num() %d"), m_nbOfRooms, m_rooms.Num());
 	//for (int i = 0; i < m_rooms.Num(); i++) {
