@@ -18,7 +18,7 @@ typedef struct RoomType {
 typedef struct Map {
 	int x_width;
 	int y_width;
-	int ** grid;
+	int** grid;
 }Map;
 
 typedef struct Room {
@@ -37,8 +37,8 @@ UCLASS()
 class TESTSC_API AMapGen : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	AMapGen();
 	AWall* addWall(FVector start, FVector end, bool isDoor = false, double height = 2.5);
 	void generateMesh();
