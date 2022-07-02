@@ -19,19 +19,15 @@ typedef struct Map {
 	int x_width;
 	int y_width;
 	int** grid;
+	char*** walls;
+	TArray<AWall*> wallElements;
 }Map;
 
 typedef struct Room {
-	TArray<AWall*> walls;
+	//TArray<AWall*> walls;
 	int type; /* 0 : corridor | 1 : basic | ...*/
 	int index;
 }Room;
-
-typedef struct Path {
-	FIntPoint pos;
-	bool walls[4]; // 0: left, 1: top, 2: right, 3: bot
-	TArray<AWall*> wallElements;
-}Path;
 
 UCLASS()
 class TESTSC_API AMapGen : public AActor
@@ -47,15 +43,16 @@ public:
 	FIntPoint getRandomPoint(int x_min, int x_max, int y_min, int y_max);
 	bool isAFreeSpace(FIntPoint coordStart, FIntPoint coordEnd);
 	bool areAlreadyConnected(FIntPoint items, TArray<FIntPoint> connections);
-	void buildDoors();
-	void initializePath(Path* path);
+	void initializeCellWalls(FIntPoint cell, char type);
+	void removeWall(FIntPoint cell, int direction);
 	int getValidNeighbour(FIntPoint cell, FIntPoint* newCell);
 	void buildCorridors();
-	void insertDoor(FVector newDoorCoord[2], int roomTested);
-
+	void displayMapInConsole();
+	void buildDoors();
+	
 	Map m_map; // Contains all the rooms index, if m_map.grid[i][j] == -1 then it's empty, there is no room created here
 	TArray<Room> m_rooms;
-	TArray<Path> m_corridors;
+	TArray<FIntPoint> m_corridors;
 	RoomType m_roomTypes[2];
 	int m_numberOfRoomTypes = 2;
 	Room m_borders;
