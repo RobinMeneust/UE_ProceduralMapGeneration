@@ -78,20 +78,21 @@ void AMapGen::generateMesh() {
 						y++;
 					}
 				}
-				else if (m_map.walls[x][y][1] == 2){
+				else if (m_map.walls[x][y][1] == 2) {
 					while (y <= m_map.y_width && m_map.walls[x][y][1] == 2) {
 						y++;
 					}
 					isDoor = true;
 				}
-				
-				if (y > m_map.y_width) 
+
+				if (y > m_map.y_width)
 					y = m_map.y_width;
 				end = y;
 				m_map.wallElements.Add(addWall(FVector(x * 100.0, start * 100.0 - m_shift, 0.0), FVector(x * 100.0, end * 100.0 + m_shift, 0.0), isDoor));
 				isDoor = false;
 			}
-			y++;
+			else
+				y++;
 		}while (y <= m_map.y_width);
 	}
 
@@ -118,7 +119,8 @@ void AMapGen::generateMesh() {
 				m_map.wallElements.Add(addWall(FVector(start * 100.0 - m_shift, y * 100.0, 0.0), FVector(end * 100.0 + m_shift, y * 100.0, 0.0), isDoor));
 				isDoor = false;
 			}
-			x++;
+			else
+				x++;
 		} while (x <= m_map.x_width);
 	}
 
@@ -438,8 +440,8 @@ AMapGen::AMapGen()
 {
 	m_borders.index = -1;
 
-	m_map.x_width = 25; // in meters
-	m_map.y_width = 25;
+	m_map.x_width = 50; // in meters
+	m_map.y_width = 50;
 
 	//CORRIDOR
 	m_roomTypes[0].min_width = 1; // 1m
@@ -448,7 +450,7 @@ AMapGen::AMapGen()
 	//BASIC ROOM
 	m_roomTypes[1].min_width = 4;
 	m_roomTypes[1].max_width = 10;
-	m_roomTypes[1].min_quantity = 4;
+	m_roomTypes[1].min_quantity = 10;
 	m_roomTypes[1].current_quantity = 0;
 
 	m_map.grid = (int**) FMemory::Malloc(sizeof(int*) * m_map.x_width);
