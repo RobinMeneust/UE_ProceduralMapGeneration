@@ -67,8 +67,7 @@ Room AMapGen::addRoom(FIntPoint start, FIntPoint end, int type) {
 void AMapGen::generateMesh() {
 	int start = 0;
 	int end = 0;
-	FVector vect_start;
-	FVector vect_end;
+	FVector vect_start, vect_end;
 	bool isDoor = false;
 	vect_start.Z = 0.0;
 	vect_end.Z = 0.0;
@@ -84,9 +83,7 @@ void AMapGen::generateMesh() {
 					}
 				}
 				else if (m_map.walls[x][y][1] == 2) {
-					while (y <= m_map.y_width && m_map.walls[x][y][1] == 2) {
-						y++;
-					}
+					y++;
 					isDoor = true;
 				}
 
@@ -117,7 +114,16 @@ void AMapGen::generateMesh() {
 				
 				vect_start.X = x * 100.0;
 				vect_end.X = x * 100.0;
-				m_map.wallElements.Add(addWall(vect_start, vect_end, isDoor));
+
+				if (isDoor) {
+					FVector doorStart = vect_start + FVector(0.0, m_shift, 0.0);
+					FVector doorEnd = vect_end - FVector(0.0, m_shift, 0.0);
+					m_map.wallElements.Add(addWall(vect_start, doorStart));
+					m_map.wallElements.Add(addWall(doorStart, doorEnd, isDoor));
+					m_map.wallElements.Add(addWall(doorEnd, vect_end));
+				}
+				else
+					m_map.wallElements.Add(addWall(vect_start, vect_end));
 				isDoor = false;
 			}
 			else
@@ -136,9 +142,7 @@ void AMapGen::generateMesh() {
 					}
 				}
 				else if (m_map.walls[x][y][0] == 2) {
-					while (x <= m_map.x_width && m_map.walls[x][y][0] == 2) {
-						x++;
-					}
+					x++;
 					isDoor = true;
 				}
 
@@ -169,7 +173,16 @@ void AMapGen::generateMesh() {
 
 				vect_start.Y = y * 100.0;
 				vect_end.Y = y * 100.0;
-				m_map.wallElements.Add(addWall(vect_start, vect_end, isDoor));
+
+				if (isDoor) {
+					FVector doorStart = vect_start + FVector(m_shift, 0.0, 0.0);
+					FVector doorEnd = vect_end - FVector(m_shift, 0.0, 0.0);
+					m_map.wallElements.Add(addWall(vect_start, doorStart));
+					m_map.wallElements.Add(addWall(doorStart, doorEnd, isDoor));
+					m_map.wallElements.Add(addWall(doorEnd, vect_end));
+				}
+				else
+					m_map.wallElements.Add(addWall(vect_start, vect_end));
 				isDoor = false;
 			}
 			else
