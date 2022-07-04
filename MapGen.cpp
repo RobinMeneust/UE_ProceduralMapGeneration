@@ -67,7 +67,12 @@ Room AMapGen::addRoom(FIntPoint start, FIntPoint end, int type) {
 void AMapGen::generateMesh() {
 	int start = 0;
 	int end = 0;
+	FVector vect_start;
+	FVector vect_end;
 	bool isDoor = false;
+	vect_start.Z = 0.0;
+	vect_end.Z = 0.0;
+
 	for (int x = 0; x <= m_map.x_width; x++) { // We create vertical walls
 		int y = 0;
 		do{
@@ -88,7 +93,31 @@ void AMapGen::generateMesh() {
 				if (y > m_map.y_width)
 					y = m_map.y_width;
 				end = y;
-				m_map.wallElements.Add(addWall(FVector(x * 100.0, start * 100.0 - m_shift, 0.0), FVector(x * 100.0, end * 100.0 + m_shift, 0.0), isDoor));
+
+				// We don't want meshes to overlap
+				if (start > 0 && m_map.walls[x][start - 1][1]) { // it's next to another wall with the same direction
+					vect_start.Y = start * 100.0;
+				}
+				else {
+					if (!(m_map.walls[x][start][0] && (x > 0 && m_map.walls[x - 1][start][0]))) // Just 1 wall or an intersection between 2 walls
+						vect_start.Y = start * 100.0 - m_shift;
+					else // Intersection between 3 walls
+						vect_start.Y = start * 100.0 + m_shift;
+				}
+
+				if (m_map.walls[x][end][1]) { // it's next to another wall with the same direction
+					vect_end.Y = end * 100.0;
+				}
+				else {
+					if (!(m_map.walls[x][end][0] && (x > 0 && m_map.walls[x - 1][end][0]))) // Just 1 wall or an intersection between 2 walls
+						vect_end.Y = end * 100.0 + m_shift;
+					else // Intersection between 3 walls
+						vect_end.Y = end * 100.0 - m_shift;
+				}
+				
+				vect_start.X = x * 100.0;
+				vect_end.X = x * 100.0;
+				m_map.wallElements.Add(addWall(vect_start, vect_end, isDoor));
 				isDoor = false;
 			}
 			else
@@ -116,7 +145,31 @@ void AMapGen::generateMesh() {
 				if (x > m_map.x_width)
 					x = m_map.x_width;
 				end = x;
-				m_map.wallElements.Add(addWall(FVector(start * 100.0 - m_shift, y * 100.0, 0.0), FVector(end * 100.0 + m_shift, y * 100.0, 0.0), isDoor));
+
+				// We don't want meshes to overlap
+				if (start > 0 && m_map.walls[start - 1][y][0]) { // it's next to another wall with the same direction
+					vect_start.X = start * 100.0;
+				}
+				else {
+					if (m_map.walls[start][y][1] || (y > 0 && m_map.walls[start][y - 1][1])) // An intersection between 2 or 3 walls
+						vect_start.X = start * 100.0 + m_shift;
+					else // Just 1 wall
+						vect_start.X = start * 100.0 - m_shift;
+				}
+
+				if (m_map.walls[end][y][0]) { // it's next to another wall with the same direction
+					vect_end.X = end * 100.0;
+				}
+				else {
+					if (m_map.walls[end][y][1] || (y > 0 && m_map.walls[end][y - 1][1])) // An intersection between 2 or 3 walls
+						vect_end.X = end * 100.0 - m_shift;
+					else // Just 1 wall
+						vect_end.X = end * 100.0 + m_shift;
+				}
+
+				vect_start.Y = y * 100.0;
+				vect_end.Y = y * 100.0;
+				m_map.wallElements.Add(addWall(vect_start, vect_end, isDoor));
 				isDoor = false;
 			}
 			else
@@ -450,7 +503,7 @@ AMapGen::AMapGen()
 	//BASIC ROOM
 	m_roomTypes[1].min_width = 4;
 	m_roomTypes[1].max_width = 10;
-	m_roomTypes[1].min_quantity = 10;
+	m_roomTypes[1].min_quantity = 40;
 	m_roomTypes[1].current_quantity = 0;
 
 	m_map.grid = (int**) FMemory::Malloc(sizeof(int*) * m_map.x_width);
