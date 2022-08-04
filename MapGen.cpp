@@ -48,13 +48,6 @@ Room AMapGen::addRoom(FIntPoint start, FIntPoint end, int type) {
 		m_map.walls[start.X][y][1] = 1; // left
 		m_map.walls[end.X][y][1] = 1; // right
 	}
-	/*/
-	newRoom.walls.Add(addWall({ coordStart.X, coordStart.Y - m_shift, coordStart.Z }, { coordStart.X, coordEnd.Y + m_shift, coordStart.Z }));
-	newRoom.walls.Add(addWall({ coordStart.X, coordEnd.Y, coordStart.Z }, { coordEnd.X, coordEnd.Y, coordEnd.Z }));
-	newRoom.walls.Add(addWall({ coordEnd.X, coordEnd.Y + m_shift, coordEnd.Z }, { coordEnd.X, coordStart.Y - m_shift, coordStart.Z }));
-	newRoom.walls.Add(addWall({ coordEnd.X, coordStart.Y, coordStart.Z }, { coordStart.X, coordStart.Y, coordStart.Z }));
-	*/
-
 
 	UE_LOG(LogTemp, Log, TEXT("ADD THE ROOM N° %d: S(%d %d) | E(%d %d)"), m_nbOfRooms, start.X, start.Y, end.X, end.Y);
 	if (type > 0)
@@ -555,8 +548,10 @@ void AMapGen::BeginPlay()
 
 	m_rooms.Empty();
 	m_corridors.Empty();
-
-	m_borders = addRoom({ 0, 0 }, { m_map.x_width, m_map.y_width }, -1);
+	AWall* wallTEST = addWall({0.0,0.0,0.0}, { 100.0,0.0,0.0 });
+	wallTEST->m_thickness = 100.0;
+	wallTEST->createWall();
+	/*m_borders = addRoom({0, 0}, {m_map.x_width, m_map.y_width}, -1);
 	UE_LOG(LogTemp, Log, TEXT("Borders have been added"));
 
 	buildRooms();
@@ -574,8 +569,8 @@ void AMapGen::BeginPlay()
 	//}
 	
 	displayMapInConsole();
-
-	generateMesh();
+	*/
+	//generateMesh();
 }
 
 void AMapGen::BeginDestroy() {

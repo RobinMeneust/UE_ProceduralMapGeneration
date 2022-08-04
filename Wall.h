@@ -15,8 +15,8 @@ class TESTSC_API AWall : public AActor
 	TArray<FVector> m_vertices;
 	TArray<int32> m_triangles;
 	TArray<FVector2D> m_uvs;
+	int m_verticesIndex;
 
-	//UPROPERTY(VisibleAnywhere)
 	UProceduralMeshComponent* m_mesh;
 
 public:
@@ -34,6 +34,7 @@ public:
 	void placeWall();
 	double getAngleBetweenVectors(FVector u, FVector v);
 	void createWall();
+	void setMaterial(UMaterial* material);
 	
 private:
 	FVector m_refVertices[8]{
@@ -48,7 +49,7 @@ private:
 		{ 15.0, 15.0, 200.0 } // Top Right Back
 	};
 
-	int m_refTriangles[8][4]{
+	int m_refTriangles[6][4]{
 		{ 0, 1, 2, 3 }, // FRONT
 		{ 6, 7, 4, 5 }, // BACK
 		{ 4, 5, 0, 1 }, // LEFT
@@ -62,7 +63,7 @@ public:
 	AWall();
 
 protected:
-	UMaterialInterface* m_material;
+	UMaterial* m_material;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

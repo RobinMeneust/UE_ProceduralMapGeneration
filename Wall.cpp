@@ -9,6 +9,7 @@ AWall::AWall()
 {
 	m_mesh = CreateDefaultSubobject<UProceduralMeshComponent>("ProcMesh");
 	RootComponent = m_mesh;
+	m_material = LoadObject<UMaterial>(nullptr, TEXT("/Game/StarterContent/Materials/M_Brick_Clay_New"));
 }
 
 void AWall::createSquareMesh(int i_face) {
@@ -21,6 +22,8 @@ void AWall::createSquareMesh(int i_face) {
 	top : 4 0 6 2
 	bot : 1 5 3 7
 	*/
+	for(int i=0; i<4; i++)
+		m_vertices.Add(m_refVertices[m_refTriangles[i_face][i]]);
 
 	m_uvs.Add(FVector2D(0, 0));
 	m_uvs.Add(FVector2D(0, 1));
@@ -28,14 +31,16 @@ void AWall::createSquareMesh(int i_face) {
 	m_uvs.Add(FVector2D(1, 1));
 
 	//Triangle1
-	m_triangles.Add(m_refTriangles[i_face][0]);
-	m_triangles.Add(m_refTriangles[i_face][1]);
-	m_triangles.Add(m_refTriangles[i_face][2]);
+	m_triangles.Add(m_verticesIndex);
+	m_triangles.Add(m_verticesIndex + 1);
+	m_triangles.Add(m_verticesIndex + 2);
 
 	//Triangle2
-	m_triangles.Add(m_refTriangles[i_face][2]);
-	m_triangles.Add(m_refTriangles[i_face][1]);
-	m_triangles.Add(m_refTriangles[i_face][3]);
+	m_triangles.Add(m_verticesIndex + 2);
+	m_triangles.Add(m_verticesIndex + 1);
+	m_triangles.Add(m_verticesIndex + 3);
+
+	m_verticesIndex += 4;
 
 	if (m_material)
 	{
@@ -44,12 +49,10 @@ void AWall::createSquareMesh(int i_face) {
 }
 
 void AWall::createMesh() {
-	for(int i=0; i<8; i++)
-		m_vertices.Add(m_refVertices[i]);
-
-	for (int i_face = 0; i_face < 6; i_face++) {
-		createSquareMesh(i_face);
-	}
+	m_verticesIndex = 0;
+	for (int i = 0; i < 6; i++)
+		createSquareMesh(i);
+	
 	m_mesh->CreateMeshSection(0, m_vertices, m_triangles, TArray<FVector>(), m_uvs, TArray<FColor>(), TArray<FProcMeshTangent>(), true);
 }
 
@@ -61,6 +64,8 @@ void AWall::init() {
 	}
 	m_length = FVector::Distance(m_end, m_start);
 	m_shift = m_thickness / 2;
+
+	float max = (m_height > m_length) ? m_height : m_length;
 
 	//FRONT
 	m_refVertices[0] = { -m_shift, 0.0, 0.0 }; // Bottom Left Front
@@ -107,7 +112,15 @@ void AWall::createWall() {
 	if (!m_isEmpty) {// if it's not an empty space (like a door going from the ground to the ceiling)
 		init();
 		createMesh();
+		setMaterial(m_material);
 		placeWall();
+	}
+}
+
+void AWall::setMaterial(UMaterial* material) {
+	if (material)
+	{
+		m_mesh->SetMaterial(0, material);
 	}
 }
 
