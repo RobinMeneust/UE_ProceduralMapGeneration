@@ -11,7 +11,7 @@ AWall* AMapGen::addWall(FVector start, FVector end, bool isDoor, double height) 
 	newWall->m_start = start;
 	newWall->m_end = end;
 	if (isDoor) {
-		newWall->m_start.Z = 180.0;
+		newWall->m_start.Z = 210.0;
 		newWall->m_end.Z = newWall->m_start.Z;
 		newWall->m_height = newWall->m_height - newWall->m_start.Z;
 	}
@@ -569,6 +569,8 @@ void AMapGen::BeginPlay()
 	displayMapInConsole();
 	
 	generateMesh();
+
+	player = GetWorld()->SpawnActor<AFPSCharacter>(AFPSCharacter::StaticClass(), FVector(-100,-100,200), FRotator::ZeroRotator);
 }
 
 void AMapGen::BeginDestroy() {

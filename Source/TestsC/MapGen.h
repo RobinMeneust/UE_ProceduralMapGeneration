@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Wall.h"
+#include "FPSCharacter.h"
 #include "MapGen.generated.h"
 
 typedef struct RoomType {
@@ -58,6 +59,7 @@ public:
 	Room m_borders;
 	double m_wallThickness = 15.0;
 	double m_shift = 7.5;
+	AFPSCharacter* player;
 
 protected:
 	// Called when the game starts or when spawned
