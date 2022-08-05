@@ -13,6 +13,7 @@ AWall::AWall()
 }
 
 void AWall::createSquareMesh(int i_face) {
+	float max = 1;
 	//top-left -> bot-left -> top-right -> bot-right
 	/*
 	front : 0 1 2 3
@@ -25,10 +26,24 @@ void AWall::createSquareMesh(int i_face) {
 	for(int i=0; i<4; i++)
 		m_vertices.Add(m_refVertices[m_refTriangles[i_face][i]]);
 
-	m_uvs.Add(FVector2D(0, 0));
-	m_uvs.Add(FVector2D(0, 1));
-	m_uvs.Add(FVector2D(1, 0));
-	m_uvs.Add(FVector2D(1, 1));
+	if (i_face == 0 || i_face == 1) { // front & back
+		m_uvs.Add(FVector2D(0, 0));
+		m_uvs.Add(FVector2D(0, m_height / 100));
+		m_uvs.Add(FVector2D(m_thickness/100, 0));
+		m_uvs.Add(FVector2D(m_thickness / 100, m_height / 100));
+	}
+	else if (i_face == 2 || i_face == 3) { // left & right
+		m_uvs.Add(FVector2D(0, 0));
+		m_uvs.Add(FVector2D(0, m_height / 100));
+		m_uvs.Add(FVector2D(m_length / 100, 0));
+		m_uvs.Add(FVector2D(m_length / 100, m_height / 100));
+	}
+	else if (i_face == 4 || i_face == 5) { // top & bot
+		m_uvs.Add(FVector2D(0, 0));
+		m_uvs.Add(FVector2D(0, m_length / 100));
+		m_uvs.Add(FVector2D(m_thickness / 100, 0));
+		m_uvs.Add(FVector2D(m_thickness / 100, m_length / 100));
+	}
 
 	//Triangle1
 	m_triangles.Add(m_verticesIndex);
@@ -41,11 +56,6 @@ void AWall::createSquareMesh(int i_face) {
 	m_triangles.Add(m_verticesIndex + 3);
 
 	m_verticesIndex += 4;
-
-	if (m_material)
-	{
-		m_mesh->SetMaterial(0, m_material);
-	}
 }
 
 void AWall::createMesh() {

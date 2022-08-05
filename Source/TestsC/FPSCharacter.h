@@ -17,6 +17,9 @@ public:
 	// Sets default values for this character's properties
 	AFPSCharacter();
 
+	USkeletalMesh* m_mesh;
+	USkeletalMeshComponent* m_meshComponent;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

@@ -29,6 +29,10 @@ AFPSCharacter::AFPSCharacter()
     // Take control of the default player
     AutoPossessPlayer = EAutoReceiveInput::Player0;
 
+	m_mesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/GenericMale"));
+	m_meshComponent = GetMesh();
+	m_meshComponent->SetSkeletalMesh(m_mesh);
+	m_meshComponent->SetRelativeLocation(FVector(0, 0, -88));
 }
 
 // Called when the game starts or when spawned
