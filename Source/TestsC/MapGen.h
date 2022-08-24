@@ -60,6 +60,7 @@ public:
 	double m_wallThickness = 15.0;
 	double m_shift = 7.5;
 	AFPSCharacter* player;
+	//UClass* lampClass = nullptr;
 
 protected:
 	// Called when the game starts or when spawned

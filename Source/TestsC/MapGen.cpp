@@ -3,6 +3,8 @@
 #include "MapGen.h"
 #include "GenericPlatform/GenericPlatformMath.h"
 #include "HAL/UnrealMemory.h"
+#include "Components/PointLightComponent.h"
+#include "UObject/ConstructorHelpers.h"
 
 AWall* AMapGen::addWall(FVector start, FVector end, bool isDoor, double height) {
 	AWall* newWall;
@@ -18,6 +20,9 @@ AWall* AMapGen::addWall(FVector start, FVector end, bool isDoor, double height) 
 	newWall->m_length = FVector::Distance(start, end);
 	//UE_LOG(LogTemp, Log, TEXT("CREATED WALL coord : (%lf %lf %lf) -> (%lf %lf %lf)"), start.X, start.Y, start.Z, end.X, end.Y, end.Z);
 	//UE_LOG(LogTemp, Log, TEXT("CREATED WALL coord : (%lf %lf %lf) -> (%lf %lf %lf)"), newWall->m_start.X, newWall->m_start.Y, newWall->m_start.Z, newWall->m_end.X, newWall->m_end.Y, newWall->m_end.Z);
+
+	newWall->SetFolderPath(TEXT("Walls"));
+
 	return newWall;
 }
 
@@ -338,13 +343,14 @@ int AMapGen::getValidNeighbour(FIntPoint cell, FIntPoint* newCell)
 	for (int i = 0; i < 4; i++) {
 		*newCell = FIntPoint(cell);
 		switch (direction) {
-			case 0:	newCell->X--; break; // Left
-			case 1:	newCell->Y++; break; // Top
-			case 2:	newCell->X++; break; // Right
-			case 3:	newCell->Y--; break; // Bot
+			case 0:	newCell->X = newCell->X - 2; break; // Left
+			case 1:	newCell->Y = newCell->Y + 2; break; // Top
+			case 2:	newCell->X = newCell->X + 2; break; // Right
+			case 3:	newCell->Y = newCell->Y - 2; break; // Bot
 		}
 		//UE_LOG(LogTemp, Log, TEXT("in getValidNeighbour() : cell and newCell pos : (%d %d) | (%d %d)"), cell.X, cell.Y, newCell->X, newCell->Y);
-		if (newCell->X >= 0 && newCell->Y >= 0 && newCell->X < m_map.x_width && newCell->Y < m_map.y_width && m_map.grid[newCell->X][newCell->Y] == -1) {
+		if (newCell->X >= 0 && newCell->Y >= 0 && newCell->X < m_map.x_width - 1 && newCell->Y < m_map.y_width - 1 &&
+			m_map.grid[newCell->X][newCell->Y] == -1 && m_map.grid[newCell->X][newCell->Y + 1] == -1 && m_map.grid[newCell->X + 1][newCell->Y] == -1 && m_map.grid[newCell->X + 1][newCell->Y + 1] == -1) {
 			//UE_LOG(LogTemp, Log, TEXT("in getValidNeighbour() : cell and newCell in map grid %d | %d"), newCell->Y, m_map.grid[cell.X][cell.Y], m_map.grid[newCell->X][newCell->Y]);
 			return direction;
 		}
@@ -360,9 +366,16 @@ int AMapGen::getValidNeighbour(FIntPoint cell, FIntPoint* newCell)
 void AMapGen::initializeCellWalls(FIntPoint cell, char type)
 {
 	m_map.walls[cell.X][cell.Y][0] = type;
+	m_map.walls[cell.X + 1][cell.Y][0] = type;
+
 	m_map.walls[cell.X][cell.Y][1] = type;
-	m_map.walls[cell.X][cell.Y  + 1][0] = type;
-	m_map.walls[cell.X + 1][cell.Y][1] = type;
+	m_map.walls[cell.X][cell.Y + 1][1] = type;
+
+	m_map.walls[cell.X][cell.Y + 2][0] = type;
+	m_map.walls[cell.X + 1][cell.Y + 2][0] = type;
+
+	m_map.walls[cell.X + 2][cell.Y][1] = type;
+	m_map.walls[cell.X + 2][cell.Y + 1][1] = type;
 }
 
 void AMapGen::removeWall(FIntPoint cell, int direction)
@@ -371,28 +384,40 @@ void AMapGen::removeWall(FIntPoint cell, int direction)
 	switch (direction) {
 	case 0:	// Left
 		//UE_LOG(LogTemp, Log, TEXT("LEFT -> index of m_rooms : %d / %d ||| TYPE = %d"), m_map.grid[cell.X - 1][cell.Y], m_rooms.Num(), m_rooms[m_map.grid[cell.X - 1][cell.Y]].type);
-		if (cell.X > 0 && (m_map.grid[cell.X - 1][cell.Y] == -1 || m_rooms[m_map.grid[cell.X - 1][cell.Y]].type == 0)) { // We don't remove map borders and room walls
-			m_map.walls[cell.X][cell.Y][1] = 0;
+		for (int i = 0; i < 2; i++) {
+			if (cell.X > 0 && (m_map.grid[cell.X - 2][cell.Y] == -1 || m_rooms[m_map.grid[cell.X - 2][cell.Y]].type == 0)) { // We don't remove map borders and room walls
+				m_map.walls[cell.X][cell.Y][1] = 0;
+			}
+			cell.Y++;
 		}
 		break;
 	case 1: // Top
 		//UE_LOG(LogTemp, Log, TEXT("TOP -> index of m_rooms : %d / %d ||| TYPE = %d"), m_map.grid[cell.X][cell.Y + 1], m_rooms.Num(), m_rooms[m_map.grid[cell.X][cell.Y + 1]].type);
-		if (cell.Y + 1 < m_map.y_width && (m_map.grid[cell.X][cell.Y + 1] == -1 || m_rooms[m_map.grid[cell.X][cell.Y + 1]].type == 0)) {
-			m_map.walls[cell.X][cell.Y + 1][0] = 0;
+		for (int i = 0; i < 2; i++) {
+			if (cell.Y + 2 < m_map.y_width && (m_map.grid[cell.X][cell.Y + 2] == -1 || m_rooms[m_map.grid[cell.X][cell.Y + 2]].type == 0)) {
+				m_map.walls[cell.X][cell.Y + 2][0] = 0;
+			}
+			cell.X++;
 		}
 		break;
 	case 2: // Right
 		//UE_LOG(LogTemp, Log, TEXT("RIGHT -> index of m_rooms : %d / %d ||| TYPE = %d"), m_map.grid[cell.X + 1][cell.Y], m_rooms.Num(), m_rooms[m_map.grid[cell.X + 1][cell.Y]].type);
-		if (cell.X + 1 < m_map.x_width && (m_map.grid[cell.X + 1][cell.Y] == -1 || m_rooms[m_map.grid[cell.X + 1][cell.Y]].type == 0)) {
-			m_map.walls[cell.X + 1][cell.Y][1] = 0;
+		for (int i = 0; i < 2; i++) {
+			if (cell.X + 2 < m_map.x_width && (m_map.grid[cell.X + 2][cell.Y] == -1 || m_rooms[m_map.grid[cell.X + 2][cell.Y]].type == 0)) {
+				m_map.walls[cell.X + 2][cell.Y][1] = 0;
+			}
+			cell.Y++;
 		}
 		break;
 	case 3:	// Bot
 		//UE_LOG(LogTemp, Log, TEXT("BOT -> index of m_rooms : %d / %d ||| TYPE = %d"), m_map.grid[cell.X][cell.Y - 1], m_rooms.Num(), m_rooms[m_map.grid[cell.X][cell.Y - 1]].type);
-		if (cell.Y > 0 && (m_map.grid[cell.X][cell.Y - 1] == -1 || m_rooms[m_map.grid[cell.X][cell.Y - 1]].type == 0)) {
-			m_map.walls[cell.X][cell.Y][0] = 0;
+		for (int i = 0; i < 2; i++) {
+			if (cell.Y > 0 && (m_map.grid[cell.X][cell.Y - 2] == -1 || m_rooms[m_map.grid[cell.X][cell.Y - 2]].type == 0)) {
+				m_map.walls[cell.X][cell.Y][0] = 0;
+			}
+			cell.X++;
 		}
-		break; 
+		break;
 	}
 }
 
@@ -411,10 +436,10 @@ void AMapGen::buildCorridors()
 	corridor.index = m_rooms.Num() - 1;
 	corridor.type = 0;
 
-	for (int x = 0; x < m_map.x_width; x++) {
-		for (int y = 0; y < m_map.y_width; y++) {
+	for (int x = 0; x < m_map.x_width - 1; x+=2) {
+		for (int y = 0; y < m_map.y_width - 1; y+=2) {
 			//UE_LOG(LogTemp, Log, TEXT("x | y = %d | %d"), x, y);
-			if (m_map.grid[x][y] == -1) {
+			if (m_map.grid[x][y] == -1 && m_map.grid[x][y + 1] == -1 && m_map.grid[x + 1][y] == -1 && m_map.grid[x + 1][y + 1] == -1) {
 				if (prev != iter) { // We add a corridor (it will be used to link unconnected) paths
 					m_rooms.Add(corridor);
 					corridor.index++;
@@ -429,6 +454,9 @@ void AMapGen::buildCorridors()
 					if (firstCell) {
 						m_corridors.Add(currentCell);
 						m_map.grid[currentCell.X][currentCell.Y] = corridor.index;
+						m_map.grid[currentCell.X][currentCell.Y + 1] = corridor.index;
+						m_map.grid[currentCell.X + 1][currentCell.Y] = corridor.index;
+						m_map.grid[currentCell.X + 1][currentCell.Y + 1] = corridor.index;
 						firstCell = false;
 					}
 
@@ -452,10 +480,14 @@ void AMapGen::buildCorridors()
 						//UE_LOG(LogTemp, Log, TEXT("neighbour found"));
 						initializeCellWalls(newCell, 1);
 						m_map.grid[newCell.X][newCell.Y] = corridor.index;
+						m_map.grid[newCell.X][newCell.Y + 1] = corridor.index;
+						m_map.grid[newCell.X + 1][newCell.Y] = corridor.index;
+						m_map.grid[newCell.X + 1][newCell.Y + 1] = corridor.index;
 						m_corridors.Add(newCell);
 						oppositeDirection = direction + 2;
 						if (oppositeDirection >= 4)
 							oppositeDirection -= 4;
+
 						removeWall(m_corridors[index], direction);
 						removeWall(newCell, oppositeDirection);
 						//UE_LOG(LogTemp, Log, TEXT("test direction & oppDir in maze gen: %d | %d ||| pos of current & new path: (%d %d) | (%d %d) ||| m_corridors[index] = (%d %d)"), direction, oppositeDirection, currentCell.X, currentCell.Y, newCell.X, newCell.Y, m_corridors[index].X, m_corridors[index].Y);
@@ -497,6 +529,13 @@ void AMapGen::displayMapInConsole() {
 
 AMapGen::AMapGen()
 {
+	// It needs to be fixed (it can't find the blueprint)
+	/*static ConstructorHelpers::FObjectFinder<UBlueprint> blueprintFinder(TEXT("Blueprint'/Game/StarterContent/Blueprints/Blueprint_CeilingLight.Blueprint_CeilingLight'"));
+	if (blueprintFinder.Object)
+		lampClass = (UClass*)blueprintFinder.Object->GeneratedClass;
+	else
+		UE_LOG(LogTemp, Log, TEXT("Failed to find the blueprint of the lamp"));
+	*/
 	m_borders.index = -1;
 
 	m_map.x_width = 50; // in meters
@@ -509,7 +548,7 @@ AMapGen::AMapGen()
 	//BASIC ROOM
 	m_roomTypes[1].min_width = 4;
 	m_roomTypes[1].max_width = 10;
-	m_roomTypes[1].min_quantity = 40;
+	m_roomTypes[1].min_quantity = 8;
 	m_roomTypes[1].current_quantity = 0;
 
 	m_map.grid = (int**) FMemory::Malloc(sizeof(int*) * m_map.x_width);
@@ -569,6 +608,18 @@ void AMapGen::BeginPlay()
 	displayMapInConsole();
 	
 	generateMesh();
+
+
+	
+	//This line will be used to create the light sources
+	//UBlueprint* lightObject = LoadObject<UBlueprint>(nullptr, TEXT("Game/StarterContent/Blueprints/Blueprint_CeilingLight"));
+
+	//AActor* lamp = GetWorld()->SpawnActor<AActor>(lampClass, FVector(0, 0, 100), FRotator::ZeroRotator);
+
+
+	//UClass* lightClass = lightObject->StaticClass();
+	//lightClass = (UClass*)lightObject->StaticClass;
+	//AActor * myLight = GetWorld()->SpawnActor<AActor>(lightClass, FVector(0,0,100), FRotator::ZeroRotator);
 
 	player = GetWorld()->SpawnActor<AFPSCharacter>(AFPSCharacter::StaticClass(), FVector(-100,-100,200), FRotator::ZeroRotator);
 }
