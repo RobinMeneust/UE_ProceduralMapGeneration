@@ -1,0 +1,8 @@
+Binaries/
+DerivedDataCache/
+.vs/
+.vscode/
+Build/
+Intermediate/
+Content/
+Saved/
