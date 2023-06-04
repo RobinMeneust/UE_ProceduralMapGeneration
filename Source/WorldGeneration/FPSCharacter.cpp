@@ -29,7 +29,8 @@ AFPSCharacter::AFPSCharacter()
 	// Take control of the default player
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 
-	m_mesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/GenericMale"));
+
+	m_mesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/GenericMale/GenericMale"));
 	m_meshComponent = GetMesh();
 	m_meshComponent->SetSkeletalMesh(m_mesh);
 	m_meshComponent->SetRelativeLocation(FVector(0, 0, -88));
@@ -54,19 +55,23 @@ void AFPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	// Set up "movement" bindings.
-	PlayerInputComponent->BindAxis("MoveForward", this, &AFPSCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &AFPSCharacter::MoveRight);
+	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &AFPSCharacter::MoveForward);
+	PlayerInputComponent->BindAxis("Move Right / Left", this, &AFPSCharacter::MoveRight);
 
 	// Set up "look" bindings.
-	PlayerInputComponent->BindAxis("Turn", this, &AFPSCharacter::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("LookUp", this, &AFPSCharacter::AddControllerPitchInput);
+	PlayerInputComponent->BindAxis("Turn Right / Left Mouse", this, &AFPSCharacter::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("Look Up / Down Mouse", this, &AFPSCharacter::AddControllerPitchInput);
 
+	// Jump
+	
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 }
 
 void AFPSCharacter::MoveForward(float Value)
 {
 	// Find out which way is "forward" and record that the player wants to move that way.
-	FVector Direction = FRotationMatrix(Controller->GetControlRotation()).GetScaledAxis(EAxis::X);
+	//FVector Direction = FRotationMatrix(Controller->GetControlRotation()).GetScaledAxis(EAxis::X);
 
 	AddMovementInput(GetActorForwardVector(), Value);
 }
@@ -74,6 +79,6 @@ void AFPSCharacter::MoveForward(float Value)
 void AFPSCharacter::MoveRight(float Value)
 {
 	// Find out which way is "right" and record that the player wants to move that way.
-	FVector Direction = FRotationMatrix(Controller->GetControlRotation()).GetScaledAxis(EAxis::Y);
+	//FVector Direction = FRotationMatrix(Controller->GetControlRotation()).GetScaledAxis(EAxis::Y);
 	AddMovementInput(GetActorRightVector(), Value);
 }

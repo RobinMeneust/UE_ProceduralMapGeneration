@@ -27,16 +27,16 @@ public:
 	double m_shift = m_thickness/2;
 	double m_height = 200.0;
 	bool m_isEmpty = false;
+	void placeWall();
+	void createWall();
 
+	
+private:
 	void init();
 	void createMesh();
 	void createSquareMesh(int i_face);
-	void placeWall();
 	double getAngleBetweenVectors(FVector u, FVector v);
-	void createWall();
 	void setMaterial(UMaterial* material);
-	
-private:
 	FVector m_refVertices[8]{
 		{ 0.0, 0.0, 0.0 }, // Bottom Left Front
 		{ 0.0, 0.0, 200.0 }, // Top Left Front

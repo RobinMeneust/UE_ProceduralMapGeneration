@@ -5,6 +5,7 @@
 #include "HAL/UnrealMemory.h"
 #include "Components/PointLightComponent.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Floor.h"
 
 AWall* AMapGen::addWall(FVector start, FVector end, bool isDoor, double height) {
 	AWall* newWall;
@@ -596,6 +597,12 @@ void AMapGen::BeginPlay()
 	generateMesh();
 
 
+	// Create floor
+	AFloor* floor = GetWorld()->SpawnActor<AFloor>(AFloor::StaticClass(), FVector(0,0,-5), FRotator::ZeroRotator);
+	floor->start = FVector(0, 0, 0);
+	floor->end = FVector(m_map.x_width*100.0, m_map.y_width*100.0, 0);
+	floor->createFloor();
+
 
 	//This line will be used to create the light sources
 	//UBlueprint* lightObject = LoadObject<UBlueprint>(nullptr, TEXT("Game/StarterContent/Blueprints/Blueprint_CeilingLight"));
@@ -607,7 +614,7 @@ void AMapGen::BeginPlay()
 	//lightClass = (UClass*)lightObject->StaticClass;
 	//AActor * myLight = GetWorld()->SpawnActor<AActor>(lightClass, FVector(0,0,100), FRotator::ZeroRotator);
 
-	//player = GetWorld()->SpawnActor<AFPSCharacter>(AFPSCharacter::StaticClass(), FVector(-100,-100,200), FRotator::ZeroRotator);
+	player = GetWorld()->SpawnActor<AFPSCharacter>(AFPSCharacter::StaticClass(), FVector(-100,-100,200), FRotator::ZeroRotator);
 }
 
 void AMapGen::BeginDestroy() {
